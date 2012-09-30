@@ -13,6 +13,7 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,13 +24,12 @@ import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 public class SOAPClientActivity extends ListActivity {
-
-	String NAMESPACE = "http://localhost/";
-	String URL = "http://10.0.2.2:21647/ClientsService.asmx";
-	String NEW_METHOD_NAME = "NewClient";
+	String URL = "http://services.netrunners.es/SOAP/SOAPService.php";
+	String NAMESPACE = "http://services.netrunners.es/SOAP/";
+	String NEW_METHOD_NAME = "newClient";
 	String LIST_METHOD_NAME = "getClients";
-	String SOAP_NEW_ACTION = "http://localhost/NewClient";
-	String SOAP_LIST_ACTION = "http://localhost/getClients";
+	String SOAP_NEW_ACTION = NAMESPACE+NEW_METHOD_NAME;
+	String SOAP_LIST_ACTION = NAMESPACE+LIST_METHOD_NAME;
 
 	String[] from = new String[] { "Name", "Surname", "Age" };
 	int[] to = new int[] { R.id.name, R.id.surname, R.id.age };
@@ -106,7 +106,7 @@ public class SOAPClientActivity extends ListActivity {
 		SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(
 				SoapEnvelope.VER11);
 
-		envelope.dotNet = true;
+		//envelope.dotNet = true;
 
 		envelope.setOutputSoapObject(request);
 
@@ -137,15 +137,14 @@ public class SOAPClientActivity extends ListActivity {
 		SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(
 				SoapEnvelope.VER11);
 
-		envelope.dotNet = true;
-
 		envelope.setOutputSoapObject(request);
 
-		HttpTransportSE transporte = new HttpTransportSE(URL);
+		HttpTransportSE transport = new HttpTransportSE(URL);
+		transport.debug = true;
 
 		try {
-			transporte.call(SOAP_LIST_ACTION, envelope);
-
+			transport.call(SOAP_LIST_ACTION, envelope);
+			
 			SoapObject resSoap = (SoapObject) envelope.getResponse();
 
 			Client[] listClients = new Client[resSoap.getPropertyCount()];
@@ -154,10 +153,10 @@ public class SOAPClientActivity extends ListActivity {
 				SoapObject ic = (SoapObject) resSoap.getProperty(i);
 
 				Client cli = new Client();
-				cli.setID(Integer.parseInt(ic.getProperty(0).toString()));
-				cli.setName(ic.getProperty(1).toString());
-				cli.setSurname(ic.getProperty(2).toString());
-				cli.setAge(Integer.parseInt(ic.getProperty(3).toString()));
+				cli.setID(Integer.parseInt(ic.getProperty("ID").toString()));
+				cli.setName(ic.getProperty("Name").toString());
+				cli.setSurname(ic.getProperty("Surname").toString());
+				cli.setAge(Integer.parseInt(ic.getProperty("Age").toString()));
 
 				listClients[i] = cli;
 			}
@@ -179,6 +178,7 @@ public class SOAPClientActivity extends ListActivity {
 		} catch (Exception e) {
 			Toast.makeText(getApplicationContext(), e.getMessage(),
 					Toast.LENGTH_LONG).show();
+			Log.e("ERROR", transport.responseDump);
 		}
 	}
 }
